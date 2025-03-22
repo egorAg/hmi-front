@@ -1,26 +1,60 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Drawer } from '@mui/material';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
+import CategoryPage from './pages/CategoryPage';
+import BrandPage from './pages/BrandPage';
+import ProductPage from './pages/ProductPage';
+import Sidebar from './components/Sidebar'; // Импортируем Sidebar
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const drawerWidth = 240;
+
+const App: React.FC = () => {
+    const [ isAuthenticated, setIsAuthenticated ] = useState<boolean>( false );
+
+    useEffect( () => {
+        const token = localStorage.getItem( 'token' );
+        if ( token ) {
+            setIsAuthenticated( true ); // Если токен есть, считаем, что пользователь авторизован
+        }
+    }, [] );
+
+    return (
+        <Router>
+            <div style={ { display: 'flex' } }>
+                {/* Только если пользователь авторизован, показываем Sidebar */ }
+                { isAuthenticated && (
+                    <Drawer
+                        sx={ {
+                            width: drawerWidth,
+                            flexShrink: 0,
+                            '& .MuiDrawer-paper': {
+                                width: drawerWidth,
+                                boxSizing: 'border-box',
+                            },
+                        } }
+                        variant="permanent"
+                        anchor="left"
+                    >
+                        <Sidebar/>
+                    </Drawer>
+                ) }
+
+                <div style={ { flexGrow: 1, padding: '16px' } }>
+                    <Routes>
+                        <Route path="/login" element={ <LoginPage/> }/>
+                        <Route path="/register" element={ <RegisterPage/> }/>
+                        <Route path="/dashboard" element={ <DashboardPage/> }/>
+                        <Route path="/categories" element={ <CategoryPage/> }/>
+                        <Route path="/brands" element={ <BrandPage/> }/>
+                        <Route path="/products" element={ <ProductPage/> }/>
+                    </Routes>
+                </div>
+            </div>
+        </Router>
+    );
+};
 
 export default App;
