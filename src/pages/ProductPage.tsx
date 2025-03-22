@@ -17,155 +17,143 @@ import { getCategories } from '../services/categoryService';
 import { createProduct, deleteProduct, getProducts } from '../services/productService';
 
 const API_URL = 'localhost:3400';
+
 const ProductPage: React.FC = () => {
-    const [ products, setProducts ] = useState<any[]>( [] ); // Список продуктов
-    const [ categories, setCategories ] = useState<any[]>( [] ); // Список категорий
-    const [ brands, setBrands ] = useState<any[]>( [] ); // Список брендов
-    const [ categoryId, setCategoryId ] = useState<string | undefined>( '' ); // ID выбранной категории
-    const [ brandId, setBrandId ] = useState<string | undefined>( '' ); // ID выбранного бренда
-    const [ page, setPage ] = useState<number>( 1 ); // Номер страницы для пагинации
-    const [ limit, setLimit ] = useState<number>( 10 ); // Лимит на количество продуктов на странице
-    const [ total, setTotal ] = useState<number>( 0 ); // Общее количество продуктов
-    const [ loading, setLoading ] = useState<boolean>( true ); // Состояние загрузки
-    const [ openDialog, setOpenDialog ] = useState<boolean>( false ); // Открытие/закрытие попапа
-    const [ productName, setProductName ] = useState<string>( '' ); // Название продукта
-    const [ productDescription, setProductDescription ] = useState<string>( '' ); // Описание продукта
-    const [ productPrice, setProductPrice ] = useState<number>( 0 ); // Цена продукта
-    const [ selectedCategoryId, setSelectedCategoryId ] = useState<string>( '' ); // ID категории
-    const [ selectedBrandId, setSelectedBrandId ] = useState<string>( '' ); // ID бренда
+    const [ products, setProducts ] = useState<any[]>( [] );
+    const [ categories, setCategories ] = useState<any[]>( [] );
+    const [ brands, setBrands ] = useState<any[]>( [] );
+    const [ categoryId, setCategoryId ] = useState<string | undefined>( '' );
+    const [ brandId, setBrandId ] = useState<string | undefined>( '' );
+    const [ page, setPage ] = useState<number>( 1 );
+    const [ limit, setLimit ] = useState<number>( 10 );
+    const [ total, setTotal ] = useState<number>( 0 );
+    const [ loading, setLoading ] = useState<boolean>( true );
+    const [ openDialog, setOpenDialog ] = useState<boolean>( false );
+    const [ productName, setProductName ] = useState<string>( '' );
+    const [ productDescription, setProductDescription ] = useState<string>( '' );
+    const [ productPrice, setProductPrice ] = useState<number>( 0 );
+    const [ selectedCategoryId, setSelectedCategoryId ] = useState<string>( '' );
+    const [ selectedBrandId, setSelectedBrandId ] = useState<string>( '' );
+    const [ categoriesPage, setCategoriesPage ] = useState<number>( 1 );
+    const [ brandsPage, setBrandsPage ] = useState<number>( 1 );
+    const [ categoriesLoading, setCategoriesLoading ] = useState<boolean>( false );
+    const [ brandsLoading, setBrandsLoading ] = useState<boolean>( false );
 
-    const [ categoriesPage, setCategoriesPage ] = useState<number>( 1 ); // Страница для категорий
-    const [ brandsPage, setBrandsPage ] = useState<number>( 1 ); // Страница для брендов
-    const [ categoriesLoading, setCategoriesLoading ] = useState<boolean>( false ); // Состояние загрузки категорий
-    const [ brandsLoading, setBrandsLoading ] = useState<boolean>( false ); // Состояние загрузки брендов
+    // --- Новое состояние для второго шага ---
+    const [ createdProductId, setCreatedProductId ] = useState<string | null>( null );
+    const [ imageFile, setImageFile ] = useState<File | null>( null );
+    const [ uploading, setUploading ] = useState<boolean>( false );
 
-    // Загрузка списка продуктов с пагинацией и фильтрацией
     const loadProducts = async () => {
         try {
-            setLoading( true ); // Начинаем загрузку
-            const { data, totalCount } = await getProducts( page, limit, categoryId, brandId ); // Получаем продукты с пагинацией и фильтрами
-            console.log( 'Данные продуктов, полученные с сервера:', data ); // Логируем данные
-
-            setProducts( data ); // Сохраняем список продуктов
-            setTotal( totalCount ); // Сохраняем общее количество продуктов
-            setLoading( false ); // Окончание загрузки
+            setLoading( true );
+            const { data, totalCount } = await getProducts( page, limit, categoryId, brandId );
+            setProducts( data );
+            setTotal( totalCount );
+            setLoading( false );
         } catch ( error ) {
             console.error( 'Ошибка при загрузке продуктов:', error );
-            setLoading( false ); // Окончание загрузки, даже если произошла ошибка
+            setLoading( false );
         }
     };
 
-    // Загрузка категорий с пагинацией
     const loadCategories = async () => {
-        if ( categoriesLoading ) return; // Если уже идет загрузка, ничего не делаем
-
-        setCategoriesLoading( true ); // Начинаем загрузку категорий
-
+        if ( categoriesLoading ) return;
+        setCategoriesLoading( true );
         try {
-            const { data } = await getCategories( categoriesPage, limit ); // Получаем категории с API
-            if ( Array.isArray( data ) ) { // Проверяем, что это массив
-                setCategories( ( prevCategories ) => {
-                    const uniqueCategories = [
-                        ...prevCategories,
-                        ...data.filter( ( newCategory: any ) => !prevCategories.some( ( existingCategory ) => existingCategory.id === newCategory.id ) )
-                    ]; // Фильтруем дубликаты по id
-                    return uniqueCategories;
-                } ); // Дополняем список категорий
-                setCategoriesPage( ( prevPage ) => prevPage + 1 ); // Увеличиваем страницу для следующих запросов
-            } else {
-                console.error( 'Ошибка: сервер вернул некорректный формат категорий', data );
+            const { data } = await getCategories( categoriesPage, limit );
+            if ( Array.isArray( data ) ) {
+                setCategories( ( prev ) => {
+                    const unique = [
+                        ...prev,
+                        ...data.filter( ( item ) => !prev.some( ( cat ) => cat.id === item.id ) )
+                    ];
+                    return unique;
+                } );
+                setCategoriesPage( ( prev ) => prev + 1 );
             }
-            setCategoriesLoading( false ); // Окончание загрузки категорий
+            setCategoriesLoading( false );
         } catch ( error ) {
             console.error( 'Ошибка при загрузке категорий:', error );
             setCategoriesLoading( false );
         }
     };
 
-
-    // Загрузка брендов с пагинацией
     const loadBrands = async () => {
-        if ( brandsLoading ) return; // Если уже идет загрузка, ничего не делаем
-
-        setBrandsLoading( true ); // Начинаем загрузку брендов
-
+        if ( brandsLoading ) return;
+        setBrandsLoading( true );
         try {
-            const { brands } = await getBrands( brandsPage, limit ); // Получаем бренды с API
-            setBrands( ( prevBrands ) => {
-                const uniqueBrands = [
-                    ...prevBrands,
-                    ...brands.filter( ( newBrand: any ) => !prevBrands.some( ( existingBrand ) => existingBrand.id === newBrand.id ) )
-                ]; // Фильтруем дубликаты по id
-                return uniqueBrands;
-            } ); // Дополняем список брендов
-            setBrandsPage( ( prevPage ) => prevPage + 1 ); // Увеличиваем страницу для следующих запросов
-            setBrandsLoading( false ); // Окончание загрузки брендов
+            const { brands: data } = await getBrands( brandsPage, limit );
+            setBrands( ( prev ) => {
+                const unique = [
+                    ...prev,
+                    ...data.filter( ( item: any ) => !prev.some( ( brand ) => brand.id === item.id ) )
+                ];
+                return unique;
+            } );
+            setBrandsPage( ( prev ) => prev + 1 );
+            setBrandsLoading( false );
         } catch ( error ) {
             console.error( 'Ошибка при загрузке брендов:', error );
             setBrandsLoading( false );
         }
     };
 
-
-    // Обработчик для удаления продукта
     const handleDeleteProduct = async ( id: string ) => {
         try {
-            await deleteProduct( id ); // Удаляем продукт
-            setProducts( ( prevProducts ) => prevProducts.filter( ( product ) => product.id !== id ) ); // Убираем продукт из списка на клиенте
+            await deleteProduct( id );
+            setProducts( ( prev ) => prev.filter( ( p ) => p.id !== id ) );
         } catch ( error ) {
             console.error( 'Ошибка при удалении продукта:', error );
         }
     };
 
-    // Обработчик для создания нового продукта
     const handleCreateProduct = async () => {
         try {
-            await createProduct( productName, productDescription, productPrice, selectedCategoryId, selectedBrandId );
-            setOpenDialog( false ); // Закрываем попап после создания продукта
-            loadProducts(); // Обновляем список продуктов
+            const created = await createProduct(
+                productName,
+                productDescription,
+                productPrice,
+                selectedCategoryId,
+                selectedBrandId
+            );
+            setOpenDialog( false );
+            setCreatedProductId( created.id ); // Переход ко второму шагу
+            loadProducts();
         } catch ( error ) {
             console.error( 'Ошибка при создании продукта:', error );
         }
     };
 
-    // Обработчик для изменения категории
     const handleCategoryChange = ( event: any ) => {
         setCategoryId( event.target.value );
-        setPage( 1 ); // Сбрасываем страницу для продуктов
-        loadProducts(); // Загружаем продукты заново
+        setPage( 1 );
+        loadProducts();
     };
 
-    // Обработчик для изменения бренда
     const handleBrandChange = ( event: any ) => {
         setBrandId( event.target.value );
-        setPage( 1 ); // Сбрасываем страницу для продуктов
-        loadProducts(); // Загружаем продукты заново
+        setPage( 1 );
+        loadProducts();
     };
 
     useEffect( () => {
-        loadCategories(); // Загружаем категории при инициализации
-        loadBrands(); // Загружаем бренды при инициализации
-        loadProducts(); // Загружаем продукты
+        loadCategories();
+        loadBrands();
+        loadProducts();
     }, [ page, limit, categoryId, brandId ] );
 
     return (
         <div>
             <Typography variant="h4">Продукты</Typography>
-
-            {/* Кнопка для открытия попапа создания продукта */ }
             <Button variant="contained" color="primary" onClick={ () => setOpenDialog( true ) }>
                 Добавить продукт
             </Button>
 
-            {/* Фильтры для категории и бренда */ }
             <div style={ { marginBottom: 20 } }>
                 <FormControl fullWidth>
                     <InputLabel>Категория</InputLabel>
-                    <Select
-                        value={ categoryId || '' }
-                        onChange={ handleCategoryChange }
-                        label="Категория"
-                    >
+                    <Select value={ categoryId || '' } onChange={ handleCategoryChange } label="Категория">
                         <MenuItem value="">Все категории</MenuItem>
                         { categories.map( ( category ) => (
                             <MenuItem key={ category.id } value={ category.id }>
@@ -177,11 +165,7 @@ const ProductPage: React.FC = () => {
 
                 <FormControl fullWidth>
                     <InputLabel>Бренд</InputLabel>
-                    <Select
-                        value={ brandId || '' }
-                        onChange={ handleBrandChange }
-                        label="Бренд"
-                    >
+                    <Select value={ brandId || '' } onChange={ handleBrandChange } label="Бренд">
                         <MenuItem value="">Все бренды</MenuItem>
                         { brands.map( ( brand ) => (
                             <MenuItem key={ brand.id } value={ brand.id }>
@@ -192,12 +176,11 @@ const ProductPage: React.FC = () => {
                 </FormControl>
             </div>
 
-            {/* Список продуктов с пагинацией */ }
             <div>
                 { loading ? (
-                    <Typography>Загрузка...</Typography> // Отображаем сообщение, пока идет загрузка
+                    <Typography>Загрузка...</Typography>
                 ) : products.length === 0 ? (
-                    <Typography>Нет продуктов для отображения.</Typography> // Если продуктов не найдено
+                    <Typography>Нет продуктов для отображения.</Typography>
                 ) : (
                     <ul>
                         { products.map( ( product ) => (
@@ -206,8 +189,6 @@ const ProductPage: React.FC = () => {
                                     <Typography variant="body1">{ product.name }</Typography>
                                     <Typography variant="body2">{ product.description }</Typography>
                                     <Typography variant="body1">{ product.price } ₽</Typography>
-
-                                    {/* Отображение изображений продуктов */ }
                                     { product.images && product.images.length > 0 && (
                                         <div>
                                             <img
@@ -217,8 +198,6 @@ const ProductPage: React.FC = () => {
                                             />
                                         </div>
                                     ) }
-
-                                    {/* Кнопка для удаления продукта */ }
                                     <Button onClick={ () => handleDeleteProduct( product.id ) } color="secondary">
                                         Удалить
                                     </Button>
@@ -227,8 +206,6 @@ const ProductPage: React.FC = () => {
                         ) ) }
                     </ul>
                 ) }
-
-                {/* Пагинация */ }
                 <div>
                     <Button disabled={ page === 1 } onClick={ () => setPage( page - 1 ) }>
                         Предыдущая
@@ -240,7 +217,7 @@ const ProductPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Модальное окно для создания продукта */ }
+            {/* Диалог создания продукта — первый шаг */ }
             <Dialog open={ openDialog } onClose={ () => setOpenDialog( false ) }>
                 <DialogTitle>Создание продукта</DialogTitle>
                 <DialogContent>
@@ -305,6 +282,60 @@ const ProductPage: React.FC = () => {
                     <Button onClick={ handleCreateProduct } color="primary">
                         Создать
                     </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Диалог загрузки изображения — второй шаг */ }
+            <Dialog open={ !!createdProductId } onClose={ () => setCreatedProductId( null ) }>
+                <DialogTitle>Загрузить изображение</DialogTitle>
+                <DialogContent>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={ ( e ) => {
+                            if ( e.target.files && e.target.files.length > 0 ) {
+                                setImageFile( e.target.files[ 0 ] );
+                            }
+                        } }
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={ () => setCreatedProductId( null ) } color="secondary">
+                        Пропустить
+                    </Button>
+                    <Button
+                        onClick={ async () => {
+                            if ( !imageFile || !createdProductId ) return;
+
+                            const formData = new FormData();
+                            formData.append( 'productId', createdProductId );
+                            formData.append( 'file', imageFile );
+
+                            setUploading( true );
+                            try {
+                                await fetch( 'http://localhost:3400/product-image/upload', {
+                                    method: 'POST',
+                                    headers: {
+                                        Authorization: `Bearer ${ localStorage.getItem( 'token' ) || '' }`,
+                                    },
+                                    body: formData,
+                                } );
+
+                                setCreatedProductId( null );
+                                setImageFile( null );
+                                loadProducts(); // обновим список продуктов
+                            } catch ( err ) {
+                                console.error( 'Ошибка при загрузке изображения:', err );
+                            } finally {
+                                setUploading( false );
+                            }
+                        } }
+                        color="primary"
+                        disabled={ !imageFile || uploading }
+                    >
+                        { uploading ? 'Загрузка...' : 'Загрузить' }
+                    </Button>
+
                 </DialogActions>
             </Dialog>
         </div>
