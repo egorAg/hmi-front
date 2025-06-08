@@ -5,12 +5,12 @@ import { useNavigate } from 'react-router-dom';
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
 
-    useEffect( () => {
-        const token = localStorage.getItem( 'token' );
-        if ( !token ) {
-            navigate( '/login' ); // Если токена нет, перенаправляем на страницу логина
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
         }
-    }, [ navigate ] );
+    }, [navigate]);
 
     return (
         <div>
@@ -18,11 +18,11 @@ const DashboardPage: React.FC = () => {
             <Button
                 variant="contained"
                 color="secondary"
-                style={ { marginTop: 20 } }
-                onClick={ () => {
-                    localStorage.removeItem( 'token' );
-                    navigate( '/login' );
-                } }
+                style={{ marginTop: 20 }}
+                onClick={() => {
+                    localStorage.removeItem('token');
+                    navigate('/login');
+                }}
             >
                 Выйти
             </Button>

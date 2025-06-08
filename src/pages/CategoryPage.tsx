@@ -16,10 +16,10 @@ const CategoryPage: React.FC = () => {
   const loadCategories = async () => {
     try {
       setLoading(true); // Начинаем загрузку
-      const { data, totalCount } = await getCategories(page, limit); // Получаем категории с пагинацией
-      console.log('Данные категорий, полученные с сервера:', data); // Логируем данные
+      const { categories, totalCount } = await getCategories(page, limit); // Получаем категории с пагинацией
+      console.log('Данные категорий, полученные с сервера:', categories); // Логируем данные
 
-      setCategories(data); // Сохраняем список категорий
+      setCategories(categories); // Сохраняем список категорий
       setTotal(totalCount); // Сохраняем общее количество категорий
       setLoading(false); // Окончание загрузки
     } catch (error) {
@@ -114,7 +114,7 @@ const CategoryPage: React.FC = () => {
                   )}
 
                   <Button onClick={() => handleDeleteCategory(category.id)}>Удалить</Button>
-                        <Button onClick={() => { setSelectedCategoryId(category.id); setSelectedCategoryName(category.name) }}>
+                  <Button onClick={() => { setSelectedCategoryId(category.id); setSelectedCategoryName(category.name) }}>
                     Редактировать
                   </Button>
                 </div>
